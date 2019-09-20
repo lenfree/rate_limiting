@@ -63,13 +63,9 @@ defmodule RateLimiting.Request do
     end
   end
 
+  # Investigate condition whether below is correct.
   def duration_expired?(params = %{duration_in_seconds: duration})
-      when duration > @interval_seconds do
-    # TODO: Once a source ip is allowed to make a request,
-    # user have to make a new request to clear information
-    # from table. This is a bug! To fix this, one solution is
-    # use GenServer handle info to constantly check all
-    # entries from table and clean it as required.
+      when duration >= @interval_seconds do
     {:ok, params} =
       Registry.delete(nil, params.source_ip_address)
       |> Registry.create(params.source_ip_address)
