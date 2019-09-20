@@ -34,7 +34,9 @@ defmodule RateLimiting.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:timex, "~> 3.5"}
+      {:timex, "~> 3.5"},
+      {:ex_doc, "~> 0.19", only: :dev},
+      {:earmark, "~> 1.3", only: :dev}
     ]
   end
 end
