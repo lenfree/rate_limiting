@@ -36,30 +36,38 @@ defmodule RateLimiting.Request do
     :error
   end
 
-  def valid_duration?(params) do
-    case get_duration(params) >= params.interval_seconds do
+  def valid_duration?(params = %{valid: valid}) when valid == true do
+    case get_duration(params) <= params.interval_seconds do
       true ->
+        # Fix this block, see if could pipe them together
+        params = Map.put(params, :duration_in_seconds, get_duration(params))
+        Registry.update(nil, params)
+        update_status(params)
+
+      false ->
         # Since first attempted request is more than duration, we
         # create a new entry in table with this timestamp.
         # Registry.create(source_ip_address)
         # add check number of request times made in 60
-        Registry.update(params)
-        {:ok, params} = Registry.lookup(:lookup_table, params.source_ip_address)
-        Map.put(params, :valid, true)
 
-      false ->
-        update_duration(params)
+        {:ok, params} =
+          Registry.delete(nil, params.source_ip_address)
+          |> Registry.create(params.source_ip_address)
+          |> Registry.lookup(params.source_ip_address)
+
+        params
     end
   end
 
   def valid_request_count?(params = %{valid: valid}) when valid == true do
-    case params.count <= @max_requests_count do
+    case params.count + 1 <= @max_requests_count do
       true ->
-        {:ok, params} = Registry.update(params)
         Map.put(params, :valid, true)
+        {:ok, params} = Registry.update(nil, params)
+        params
 
       false ->
-        update_duration(params, :count)
+        update_status(params, :count)
     end
   end
 
@@ -71,19 +79,15 @@ defmodule RateLimiting.Request do
       |> Registry.create(params.source_ip_address)
       |> Registry.lookup(params.source_ip_address)
 
-    update_duration(params)
+    params
   end
 
   def duration_expired?(params) do
-    update_duration(params)
+    update_status(params)
   end
 
   def get_duration(params) do
     DateTime.diff(DateTime.utc_now(), params.time_request_made, :second)
-  end
-
-  def get_absolute_time(value) do
-    Integer.to_string(value)
   end
 
   def duration_left(params) do
@@ -91,20 +95,20 @@ defmodule RateLimiting.Request do
   end
 
   def parse_error_message(config) do
-    time = duration_left(config) |> get_absolute_time
+    time = duration_left(config)
     message = "Rate limit exceeded. Try again in #{time} seconds"
 
     response = Map.put(config, :response_message, message)
     Map.put(response, :response_code, 429)
   end
 
-  def update_duration(params, :count) do
+  def update_status(params, :count) do
     params = Map.put(params, :duration_in_seconds, get_duration(params))
     params = Map.put(params, :valid, false)
     Map.put(params, :error, "request count of '#{@max_requests_count}' exceeded")
   end
 
-  def update_duration(params) do
+  def update_status(params) do
     params = Map.put(params, :duration_in_seconds, get_duration(params))
     Map.put(params, :valid, true)
   end

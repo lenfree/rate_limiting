@@ -49,7 +49,7 @@ defmodule RateLimiting.Registry do
     end
   end
 
-  def update(params) do
+  def update(_table_name, params) do
     params = Map.update(params, :count, 1, &(&1 + 1))
 
     case GenServer.call(__MODULE__, {:create, params.source_ip_address, params}) do
