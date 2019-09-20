@@ -4,7 +4,7 @@ defmodule RateLimiting.MixProject do
   def project do
     [
       app: :rate_limiting,
-      version: "0.1.0",
+      version: "0.1.1",
       name: "rate_limiting",
       source_url: "https://github.com/lenfree/rate_limiting",
       elixir: "~> 1.9",

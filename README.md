@@ -10,7 +10,7 @@ by adding `rate_limiting` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:rate_limiting, "~> 0.1.0"}
+    {:rate_limiting, "~> 0.1.1"}
   ]
 end
 ```
