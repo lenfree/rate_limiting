@@ -25,7 +25,7 @@ config :rate_limiting,
 ## TODO:
 Add tests!!!!
 
-For an example, please see https://github.com/lenfree/rate_limiting/example.
+For an example, please see https://github.com/lenfree/rate_limiting/tree/master/example.
 
 Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
 and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
