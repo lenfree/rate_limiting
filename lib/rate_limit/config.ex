@@ -8,5 +8,5 @@ defmodule RateLimiting.Config do
             duration_in_seconds: nil,
             error: nil,
             source_ip_address: nil,
-            valid: nil
+            valid: true
 end

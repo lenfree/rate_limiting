@@ -15,7 +15,7 @@ defmodule RateLimiting.Request do
           Registry.create(nil, source_ip_address)
           |> Registry.lookup(source_ip_address)
 
-        params
+        Registry.update(nil, params)
 
       {:ok, params} ->
         params |> valid?()
@@ -40,8 +40,6 @@ defmodule RateLimiting.Request do
     case get_duration(params) <= params.interval_seconds do
       true ->
         # Fix this block, see if could pipe them together
-        params = Map.put(params, :duration_in_seconds, get_duration(params))
-        Registry.update(nil, params)
         update_status(params)
 
       false ->
@@ -55,20 +53,30 @@ defmodule RateLimiting.Request do
           |> Registry.create(params.source_ip_address)
           |> Registry.lookup(params.source_ip_address)
 
+        IO.inspect(params)
         params
     end
   end
 
+  def valid_duration?(params) do
+    params
+  end
+
   def valid_request_count?(params = %{valid: valid}) when valid == true do
-    case params.count + 1 <= @max_requests_count do
-      true ->
+    cond do
+      params.count < @max_requests_count ->
         Map.put(params, :valid, true)
         {:ok, params} = Registry.update(nil, params)
         params
 
-      false ->
+      true ->
         update_status(params, :count)
     end
+  end
+
+  def valid_request_count?(params) do
+    {:ok, params} = Registry.update(nil, params)
+    params
   end
 
   # Investigate condition whether below is correct.
@@ -83,7 +91,7 @@ defmodule RateLimiting.Request do
   end
 
   def duration_expired?(params) do
-    update_status(params)
+    Map.put(params, :duration_in_seconds, get_duration(params))
   end
 
   def get_duration(params) do

@@ -32,7 +32,7 @@ defmodule RateLimiting.Registry do
   def create(_table_name, source_ip_address) do
     params = %RateLimiting.Config{
       time_request_made: DateTime.utc_now(),
-      count: 1,
+      count: 0,
       interval_seconds: @interval_seconds,
       max_requests_count: @max_requests_count,
       duration_in_seconds: 0,
