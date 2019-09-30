@@ -15,7 +15,8 @@ defmodule RateLimiting.Request do
           Registry.create(nil, source_ip_address)
           |> Registry.lookup(source_ip_address)
 
-        Registry.update(nil, params)
+        {:ok, config} = Registry.update(nil, params)
+        config
 
       {:ok, params} ->
         params |> valid?()
