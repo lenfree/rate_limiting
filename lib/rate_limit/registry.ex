@@ -14,19 +14,17 @@ defmodule RateLimiting.Registry do
 
   @doc """
   Looks up the bucket pid for `name` stored in `table`.
-
   Returns `{:ok, pid}` if the bucket exists, `:error` otherwise.
   """
-  def lookup(_table_name, name) do
-    # 2. Lookup is now done directly in ETS, without accessing the server
-    case :ets.lookup(:lookup_table, name) do
-      [{^name, config}] -> {:ok, config}
-      [] -> :error
+  def lookup(_table_name, source_ip_address) do
+    case GenServer.call(__MODULE__, {:search, source_ip_address}) do
+      {:lookup_table, nil} -> create(nil, source_ip_address)
+      {:lookup_table, config} -> {:ok, config}
     end
   end
 
-  def delete(_table_name, name) do
-    GenServer.call(__MODULE__, {:delete, name})
+  def delete(_table_name, source_ip_address) do
+    GenServer.call(__MODULE__, {:delete, source_ip_address})
   end
 
   def create(_table_name, source_ip_address) do
@@ -69,20 +67,24 @@ defmodule RateLimiting.Registry do
     {:ok, {table, refs}}
   end
 
-  def handle_call({:create, name, params}, _from, opts) do
-    case lookup(:lookup_table, :name) do
-      {:ok, params} ->
-        :ets.insert(:lookup_table, {name, params})
-        {:reply, {:lookup_table, params}, opts}
+  def handle_call({:create, source_ip_address, params}, _from, opts) do
+    :ets.insert(:lookup_table, {source_ip_address, params})
+    {:reply, {:lookup_table, params}, opts}
+  end
 
-      :error ->
-        :ets.insert(:lookup_table, {name, params})
-        {:reply, {:lookup_table, params}, opts}
+  def handle_call({:search, source_ip_address}, _from, opts) do
+    case :ets.lookup(:lookup_table, source_ip_address) do
+      [{^source_ip_address, config}] ->
+        {:ok, config}
+        {:reply, {:lookup_table, config}, opts}
+
+      _ ->
+        {:reply, {:lookup_table, nil}, opts}
     end
   end
 
-  def handle_call({:delete, name}, _from, opts) do
-    :ets.delete(:lookup_table, name)
+  def handle_call({:delete, source_ip_address}, _from, opts) do
+    :ets.delete(:lookup_table, source_ip_address)
     {:reply, {:lookup_table, nil}, opts}
   end
 
