@@ -30,3 +30,7 @@ create-tag: next-tag
 	git fetch --tags lenfree
 	git tag -a v$(TAG) -m "v$(TAG)"
 	git push lenfree v$(TAG)
+
+.PHONY: watch
+watch:
+	watchexec -w . mix test

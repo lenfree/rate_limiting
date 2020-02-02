@@ -13,17 +13,18 @@ defmodule RateLimiting do
   ## Examples
 
       iex> RateLimiting.allow?("1.2.3.4")
-      {:error, response} ->
-        %RateLimiting.Config{
+      {:error, %RateLimiting.Config{
+          count: 100,
+          duration_in_seconds: 0,
           interval_seconds: 60,
           max_requests: 100,
-          time_request_made: %Time{},
+          time_request_made: %DateTime{},
           response_code: 429,
           response_message: "Rate limit exceeded. Try again in 60 seconds.",
-          source_ip_address: "1.2.3.4"
-          valid? false
+          source_ip_address: "1.2.3.4",
+          valid?: false,
         }
-
+      }
 
   """
   # TODO: see if we can add source_ip_address
