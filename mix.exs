@@ -36,7 +36,9 @@ defmodule RateLimiting.MixProject do
     [
       {:timex, "~> 3.5"},
       {:ex_doc, "~> 0.19", only: :dev},
-      {:earmark, "~> 1.3", only: :dev}
+      {:earmark, "~> 1.3", only: :dev},
+      {:memento, git: "https://github.com/sheharyarn/memento"},
+      {:libcluster, "~> 3.0"}
     ]
   end
 end

@@ -1,6 +1,8 @@
 # RateLimiting
 
-A simple rate limiting application for demo purposes only.
+A simple rate limiting application for demo purposes only. Previously, it only supports
+ETS but now it supports distributed DB with Mnensia and libcluster to handle node joining
+cluster. Goal is to make this configurable with different backends.
 
 ## Installation
 

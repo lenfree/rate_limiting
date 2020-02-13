@@ -1,12 +1,15 @@
 defmodule RateLimiting.Config do
-  defstruct interval_seconds: nil,
-            max_requests_count: nil,
-            time_request_made: nil,
-            response_code: nil,
-            response_message: nil,
-            count: 0,
-            duration_in_seconds: nil,
-            error: nil,
-            source_ip_address: nil,
-            valid: true
+  use Memento.Table,
+    attributes: [
+      :source_ip_address,
+      :interval_seconds,
+      :max_requests_count,
+      :time_request_made,
+      :response_code,
+      :response_message,
+      :count,
+      :duration_in_seconds,
+      :error,
+      :valid
+    ]
 end

@@ -3,7 +3,14 @@ defmodule RateLimiting.Application do
   use Application
 
   def start(_type, _args) do
+    topologies = [
+      example: [
+        strategy: Cluster.Strategy.Gossip
+      ]
+    ]
+
     children = [
+      {Cluster.Supervisor, [topologies, [name: RateLimiting.ClusterSupervisor]]},
       {RateLimiting.Registry, []}
     ]
 
