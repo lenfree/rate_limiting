@@ -24,3 +24,6 @@ rate_limiting-*.tar
 
 .elixir_ls/
 .elixir_ls/
+
+
+.mnesia

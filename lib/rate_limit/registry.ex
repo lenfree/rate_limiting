@@ -1,13 +1,11 @@
 defmodule RateLimiting.Registry do
   use GenServer
-  alias Timex.Duration
 
   @server __MODULE__
 
   @interval_seconds Application.get_env(:rate_limiting, :interval_seconds)
   @max_requests_count Application.get_env(:rate_limiting, :max_requests_count)
 
-  ## Client API
   def start_link(_opts) do
     GenServer.start_link(__MODULE__, [], name: @server)
   end
@@ -62,29 +60,56 @@ defmodule RateLimiting.Registry do
   ## Server callbacks
 
   def init(_opts) do
-    table = :ets.new(:lookup_table, [:named_table, read_concurrency: true])
+    Memento.stop()
+    nodes = [node() | Node.list()]
+
+    case Enum.count(Node.list()) > 0 do
+      true ->
+        Memento.start()
+        Memento.add_nodes(Node.list())
+        Memento.info()
+
+      false ->
+        Memento.stop()
+        Memento.Schema.create(nodes)
+        Memento.start()
+        Memento.Table.create!(RateLimiting.Config, disc_copies: nodes)
+        Memento.start()
+    end
+
     refs = %{}
-    {:ok, {table, refs}}
+    {:ok, {refs}}
   end
 
-  def handle_call({:create, source_ip_address, params}, _from, opts) do
-    :ets.insert(:lookup_table, {source_ip_address, params})
+  def handle_call({:create, _source_ip_address, params}, _from, opts) do
+    Memento.transaction!(fn ->
+      Memento.Query.write(params)
+    end)
+
     {:reply, {:lookup_table, params}, opts}
   end
 
   def handle_call({:search, source_ip_address}, _from, opts) do
-    case :ets.lookup(:lookup_table, source_ip_address) do
-      [{^source_ip_address, config}] ->
-        {:ok, config}
-        {:reply, {:lookup_table, config}, opts}
+    data =
+      Memento.transaction!(fn ->
+        Memento.Query.read(RateLimiting.Config, source_ip_address)
+      end)
 
-      _ ->
+    case data do
+      nil ->
         {:reply, {:lookup_table, nil}, opts}
+
+      data ->
+        {:ok, data}
+        {:reply, {:lookup_table, data}, opts}
     end
   end
 
   def handle_call({:delete, source_ip_address}, _from, opts) do
-    :ets.delete(:lookup_table, source_ip_address)
+    Memento.transaction!(fn ->
+      Memento.Query.delete(RateLimiting.Config, source_ip_address)
+    end)
+
     {:reply, {:lookup_table, nil}, opts}
   end
 
