@@ -9,10 +9,12 @@ cluster. Goal is to make this configurable with different backends.
 If [available in Hex](https://hex.pm/docs/publish), the package can be installed
 by adding `rate_limiting` to your list of dependencies in `mix.exs`:
 
+Tested on Elixir v1.10.1
+
 ```elixir
 def deps do
   [
-    {:rate_limiting, "~> 0.1.4"}
+    {:rate_limiting, "~> 0.1.5"}
   ]
 end
 ```
@@ -23,6 +25,11 @@ To configure request count and duration:
 config :rate_limiting,
  interval_seconds: 60,
  max_requests_count: 100
+
+# Required config for mnesia disc mode
+config :mnesia,
+  dir: '.mnesia/#{Mix.env()}/#{node()}'
+
 ```
 
 ## TODO:

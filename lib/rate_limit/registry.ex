@@ -1,6 +1,6 @@
 defmodule RateLimiting.Registry do
   use GenServer
-
+  require IEx
   @server __MODULE__
 
   @interval_seconds Application.get_env(:rate_limiting, :interval_seconds)
@@ -63,10 +63,25 @@ defmodule RateLimiting.Registry do
     Memento.stop()
     nodes = [node() | Node.list()]
 
+    # TODO: Investigate
+    # Libcluster takes at least a second to join new nodes with gossip protocol
+    Process.sleep(1000)
+
     case Enum.count(Node.list()) > 0 do
       true ->
         Memento.start()
-        Memento.add_nodes(Node.list())
+
+        # TODO: Investigate - Seems like there's a bug with Memento for setting up cluster.
+        #        Memento.add_nodes(Node.list())
+        #        Memento.info()
+        #        Memento.Table.set_storage_type(RateLimiting.Config, node(), :disc_copies)
+        #        Memento.Table.create_copy(RateLimiting.Config, node(), :disc_copies)
+        #        Memento.info()
+
+        # Thanks to https://github.com/sheharyarn/memento/issues/17
+        :mnesia.change_config(:extra_db_nodes, Node.list())
+        :mnesia.change_table_copy_type(:schema, node(), :disc_copies)
+        :mnesia.add_table_copy(RateLimiting.Config, node(), :disc_copies)
         Memento.info()
 
       false ->
@@ -74,7 +89,7 @@ defmodule RateLimiting.Registry do
         Memento.Schema.create(nodes)
         Memento.start()
         Memento.Table.create!(RateLimiting.Config, disc_copies: nodes)
-        Memento.start()
+        Memento.info()
     end
 
     refs = %{}
